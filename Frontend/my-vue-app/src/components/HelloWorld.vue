@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p>{{ flaskData }}</p>
+    <h1>putos tod0s </h1>
   </div>
 </template>
 
