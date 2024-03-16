@@ -1,13 +1,17 @@
+
 <template>
-    <div class="admin-dashboard">
-      <h1 class="animated-element">Hola {{ userName }}</h1>
-      <div class="header animated-element">
-        <button @click="toggleScheduleChange">Cambiar Horario</button>
+  <div class="admin-dashboard">
+    <h1 class="animated-element">Hola {{ userName }}</h1>
+    <div class="header animated-element">
+      <button @click="toggleScheduleChange">Cambiar Horario</button>
+    </div>
+    <div class="current-schedule animated-element" v-if="showCurrentSchedule">
+      <h2>Horario Actual</h2>
+      <div v-for="asignacion in horario" :key="asignacion.profesor + asignacion.dia + asignacion.horario" class="asignacion-item">
+        {{ asignacion.dia }} {{ asignacion.horario }}: {{ asignacion.materia }} - {{ asignacion.profesor }} en {{ asignacion.aula }}
       </div>
-      <div class="current-schedule animated-element" v-if="showCurrentSchedule">
-        <h2>Horario Actual</h2>
-        <!-- Contenido del horario actual -->
-      </div>
+    </div>
+  </div>
   
       <!-- Transición para el modal -->
       <transition name="fade">
@@ -43,13 +47,12 @@
           </div>
         </div>
       </transition>
-    </div>
+
   </template>
   
   
   <script>
   import axios from 'axios';
-  
   export default {
     name: 'AdminDashboard',
     data() {
@@ -62,11 +65,13 @@
         selectedClassroom: '',
         classroomOptions: [],
         addedClassrooms: [],
+        horario: [],
       };
     },
     created() {
-      this.fetchSubjects();
-      this.fetchClassrooms();
+    this.fetchSubjects();
+    this.fetchClassrooms();
+    this.fetchHorario(); // Agrega esta línea
     },
     computed: {
   userName() {
@@ -79,7 +84,15 @@
       toggleScheduleChange() {
         this.showModal = !this.showModal;
         this.showCurrentSchedule = !this.showCurrentSchedule;
-      },
+      },fetchHorario() {
+  axios.get('http://localhost:5000/horario')
+    .then(response => {
+      console.log(response.data); // Log para depuración
+      this.horario = response.data; // Asigna los datos a la propiedad horario
+    })
+    .catch(error => console.error('Hubo un error al obtener el horario:', error));
+},
+
       fetchSubjects() {
         axios.get('http://localhost:5000/api/asignaturas') // Asegúrate de usar la URL completa.
           .then(response => {

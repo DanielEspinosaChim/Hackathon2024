@@ -34,6 +34,7 @@ export default {
       password: '',
       logoPath, // Esto hace que la imagen esté disponible en la plantilla
       animated: false // Variable para controlar la animación
+      
     };
   },
   methods: {
@@ -58,12 +59,12 @@ export default {
     this.$router.push('/admin-dashboard');
   }
 } else {
-  console.log('Invalid username or password!');
+  alert('Invalid username or password!');
 }
 
   } catch (error) {
     console.error('Error during login:', error);
-    console.log('Error during login. Please try again.');
+    alert('Error during login. Please try again.');
   }
 }
   },
