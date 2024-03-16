@@ -1,6 +1,6 @@
 <template>
-    <div class="teacher-dashboard">
-      <h1>Hola Profe {{ userName }}</h1>
+    <div class="teacher-dashboard fade-in-element">
+      <h1 class="title">Hola Profe {{ userName }}</h1>
       <div class="toolbar">
         <!-- Iconos de toolbar aquí -->
       </div>
@@ -33,7 +33,7 @@
     </div>
   </template>
   
-  <script>
+    <script>
   import axios from 'axios'; // Importa Axios para hacer solicitudes HTTP
   
   export default {
@@ -77,97 +77,157 @@
       isSelected(hour, day) {
         return this.selectedHours[day] && this.selectedHours[day].includes(hour);
       },
+      calculateMinimumSelection() {
+        if (this.nombramiento >= 4 && this.nombramiento <= 19) {
+          return this.nombramiento;
+        } else if (this.nombramiento >= 20 && this.nombramiento <= 40) {
+          return Math.floor(this.nombramiento / 2) + 2;
+        }
+        return 0; // Default case, should not happen
+      },
+      isSelectionValid() {
+        const totalSelected = Object.values(this.selectedHours).reduce((acc, curr) => acc + curr.length, 0);
+        const minimumSelection = this.calculateMinimumSelection();
+        return totalSelected >= minimumSelection;
+      },
       async submitAvailability() {
-  console.log('Horas seleccionadas:', this.selectedHours);
-  console.log('Nombramiento:', this.nombramiento);
-
-  // Format selected hours to HH:MM:SS format for backend compatibility
-  const formattedHours = {};
-  for (const day in this.selectedHours) {
-    formattedHours[day] = this.selectedHours[day].map(hourRange => {
-      const [start, end] = hourRange.split(' - ');
-      const startTime = `${start}:00`; // Correctly formatted start time
-      const endTime = `${end.split(' ')[0]}:00`; // Correctly formatted end time, removing 'hrs' and extra zeros
-      return `${startTime} - ${endTime}`;
-    });
-  }
-
-  // Construct data object to send to backend
-  const data = {
-    profesor_id: 1, // This should be dynamically set based on the actual teacher's ID
-    disponibilidad: formattedHours,
-    nombramiento: this.nombramiento
-  };
-
-  try {
-    // Perform POST request to backend
-    const response = await axios.post('http://localhost:5000/api/disponibilidad', data);
-
-    // Log success message from backend
-    console.log(response.data.message);
-  } catch (error) {
-    // Log any errors to the console
-    console.error('Error al enviar disponibilidad:', error);
-  }
-}
+        if (!this.isSelectionValid()) {
+          alert(`Debes seleccionar al menos ${this.calculateMinimumSelection()} horas.`);
+          return;
+        }
+  
+        const profesor_id = localStorage.getItem('profesor_id');
+        const formattedHours = this.formatSelectedHours();
+        const data = {
+          profesor_id: profesor_id,
+          disponibilidad: formattedHours,
+          nombramiento: this.nombramiento
+        };
+  
+        try {
+          const response = await axios.post('http://localhost:5000/api/disponibilidad', data);
+          console.log(response.data.message);
+          // Reset selected hours and appointment after successful submission
+          this.selectedHours = {}; // Clears all selections
+          this.nombramiento = null; // Resets the appointment to null or your initial value
+        } catch (error) {
+          console.error('Error al enviar disponibilidad:', error);
+        }
+      },
+      formatSelectedHours() {
+        const formattedHours = {};
+        for (const day in this.selectedHours) {
+          formattedHours[day] = this.selectedHours[day].map(hourRange => {
+            const [start, end] = hourRange.split(' - ');
+            return `${start}:00 - ${end.split(' ')[0]}:00`;
+          });
+        }
+        return formattedHours;
+      }
     }
   }
   </script>
-  
+    
   <style scoped>
-  .teacher-dashboard .toolbar {
+  /* Animación de entrada para el dashboard del profesor */
+  .teacher-dashboard {
+    animation: fadeIn 1.5s ease forwards;
+    opacity: 0;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Estilos generales */
+  .teacher-dashboard {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #6be5ee 0%, #4754a3 100%);
+    color: #333;
+    padding: 20px;
+  }
+  
+  /* Herramientas y otros controles */
+  .teacher-dashboard .toolbar, .nombramiento, .availability, .calendar .days div, .calendar .hours .hour-row > div {
+    border-radius: 20px;
+  }
+  
+  .toolbar {
     display: flex;
     justify-content: space-around;
     padding: 10px;
   }
   
-  .teacher-dashboard .nombramiento {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .nombramiento, .availability {
     margin: 10px;
   }
   
-  .teacher-dashboard .nombramiento input {
-    margin-left: 5px;
-    padding: 5px;
-    border: 1px solid #ccc;
+  .nombramiento label, .nombramiento input, .availability button, .calendar .days div, .calendar .hours .hour-row > div {
+    font-size: 16px;
   }
   
-  .teacher-dashboard .availability {
-    margin: 10px;
+  .nombramiento input, .availability button {
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #ffff;
+    color: black;
+    border: none;
+    cursor: pointer;
+    border-radius: 20px;
   }
   
-  .teacher-dashboard .calendar .days {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  text-align: center;
-  font-weight: bold;
+  .nombramiento input:focus, .availability button:hover {
+    background-color: #64b8fd;
   }
   
-  .teacher-dashboard .calendar .hours .hour-row {
-  display: grid;
-  grid-template-columns: auto repeat(5, 1fr);
-  margin-bottom: 5px;
+  /* Calendario y selección de horas */
+  .calendar .days {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    text-align: center;
+    font-weight: bold;
   }
-  .teacher-dashboard .calendar .hours .hour-selection {
-    height: 20px; /* Altura reducida para los cuadros de selección */
+  
+  .calendar .hours .hour-row {
+    display: grid;
+    grid-template-columns: auto repeat(5, 1fr);
+    margin-bottom: 5px;
+  }
+  
+  .hour-selection {
+    height: 20px;
     background-color: #f0f0f0;
     border: 1px solid #e0e0e0;
     cursor: pointer;
   }
   
-  .teacher-dashboard .calendar .hours .hour-selection.selected {
+  .hour-selection.selected {
     background-color: #4CAF50;
   }
   
-  .teacher-dashboard .availability button {
-    padding: 10px 20px;
-    margin-top: 20px;
-    background-color: #00BCD4;
+  /* Botones */
+  .availability button {
+    background-color: #474c51;
     color: white;
     border: none;
     cursor: pointer;
+  }
+  
+  /* Ajustes finos a inputs y botones para coherencia */
+  input[type="number"], button {
+    border-radius: 4px;
+  }
+  
+  input[type="number"]:focus {
+    outline: none;
+    border-color: #2196F3;
   }
   </style>
   

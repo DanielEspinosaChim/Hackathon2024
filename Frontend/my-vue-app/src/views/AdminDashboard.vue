@@ -1,46 +1,51 @@
 <template>
     <div class="admin-dashboard">
-        <h1>Hola {{ userName }}</h1>
-      <div class="header">
+      <h1 class="animated-element">Hola {{ userName }}</h1>
+      <div class="header animated-element">
         <button @click="toggleScheduleChange">Cambiar Horario</button>
       </div>
-      <div class="current-schedule" v-if="showCurrentSchedule">
+      <div class="current-schedule animated-element" v-if="showCurrentSchedule">
         <h2>Horario Actual</h2>
         <!-- Contenido del horario actual -->
       </div>
-      <div class="schedule-change-modal" v-if="showModal">
-        <div class="generator">
-          <div class="subjects">
-            <h2>Materias</h2>
-            <select v-model="selectedSubject">
-              <option disabled value="">Seleccione una materia</option>
-              <option v-for="subject in subjectOptions" :key="subject" :value="subject">
-                {{ subject }}
-              </option>
-            </select>
-            <button @click="addSubject">Añadir Materia</button>
-            <ul>
-              <li v-for="(subject, index) in addedSubjects" :key="index">{{ subject }}</li>
-            </ul>
+  
+      <!-- Transición para el modal -->
+      <transition name="fade">
+        <div class="schedule-change-modal" v-if="showModal">
+          <div class="generator animated-element">
+            <div class="subjects">
+              <h2>Materias</h2>
+              <select v-model="selectedSubject">
+                <option disabled value="">Seleccione una materia</option>
+                <option v-for="subject in subjectOptions" :key="subject" :value="subject">
+                  {{ subject }}
+                </option>
+              </select>
+              <button @click="addSubject">Añadir Materia</button>
+              <ul>
+                <li v-for="(subject, index) in addedSubjects" :key="index">{{ subject }}</li>
+              </ul>
+            </div>
+            <div class="classrooms">
+              <h2>Aulas</h2>
+              <select v-model="selectedClassroom">
+                <option disabled value="">Seleccione un aula</option>
+                <option v-for="classroom in classroomOptions" :key="classroom" :value="classroom">
+                  {{ classroom }}
+                </option>
+              </select>
+              <button @click="addClassroom">Añadir Aula</button>
+              <ul>
+                <li v-for="(classroom, index) in addedClassrooms" :key="index">{{ classroom }}</li>
+              </ul>
+            </div>
+            <button @click="generateSchedule">GENERAR</button>
           </div>
-          <div class="classrooms">
-            <h2>Aulas</h2>
-            <select v-model="selectedClassroom">
-              <option disabled value="">Seleccione un aula</option>
-              <option v-for="classroom in classroomOptions" :key="classroom" :value="classroom">
-                {{ classroom }}
-              </option>
-            </select>
-            <button @click="addClassroom">Añadir Aula</button>
-            <ul>
-              <li v-for="(classroom, index) in addedClassrooms" :key="index">{{ classroom }}</li>
-            </ul>
-          </div>
-          <button @click="generateSchedule">GENERAR</button>
         </div>
-      </div>
+      </transition>
     </div>
   </template>
+  
   
   <script>
   import axios from 'axios';
@@ -115,51 +120,76 @@
   }
   </script>
 
-  <style scoped>
-  .admin-dashboard {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #4ecdc4;
-    color: #333;
-    padding: 20px;
+<style scoped>
+/* Estilos para la animación de entrada */
+.animated-element {
+  animation: fadeIn 1.5s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px); /* Mover el elemento hacia arriba al inicio de la animación */
   }
-  
-  .header button {
-    padding: 10px;
-    margin-bottom: 20px;
+  to {
+    opacity: 1;
+    transform: translateY(0); /* Llevar el elemento a su posición original al final de la animación */
   }
-  
-  .current-schedule {
-    background-color: white;
-    border: 1px solid #ccc;
-    padding: 20px;
-  }
-  
-  .schedule-change-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border: 1px solid #ccc;
-    z-index: 10;
-  }
-  
-  .generator {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .subjects, .classrooms {
-    margin: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-  }
-  
-  .subject, .classroom {
-    margin-bottom: 5px;
-  }
-  select {
+}
+
+/* Estilos adicionales */
+.admin-dashboard {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #6be5ee 0%, #4754a3 100%); /* Fondo gradiente */
+  color: #333;
+  padding: 20px;
+}
+
+.header button {
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 20px; /* Bordes más redondeados */
+}
+
+.current-schedule {
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 20px; /* Bordes más redondeados */
+}
+
+.schedule-change-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border: 1px solid #ccc;
+  z-index: 10;
+  border-radius: 20px; /* Bordes más redondeados */
+}
+
+.generator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.subjects, .classrooms {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: #6be5ee; /* Color similar al azul degradado */
+  border-radius: 20px; /* Bordes más redondeados */
+}
+
+.subject, .classroom {
+  margin-bottom: 5px;
+}
+
+select {
   padding: 10px;
   margin-bottom: 15px;
   border: 1px solid #ccc;
@@ -168,11 +198,10 @@
   font-size: 16px;
 }
 
-  
-  button {
+button {
   padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px; /* Bordes más redondeados */
   background-color: #333;
   color: white;
   font-size: 16px;
@@ -180,7 +209,6 @@
 }
 
 button:hover {
-  background-color: #555;
+  background-color: #64b8fd;
 }
-  </style>
-  
+</style>

@@ -8,7 +8,7 @@ CORS(app, origins=["http://localhost:8080"])
 
 # Configurar la conexión a MariaDB
 config = {
-    'host': '10.17.164.102',
+    'host': '10.17.166.53',
     'port': 3306,
     'user': 'poncho',
     'password': 'poncho',
@@ -27,15 +27,23 @@ def login():
     try:
         conn = mariadb.connect(**config)
         cur = conn.cursor()
-
-        cur.execute("SELECT Nombre FROM Profesor WHERE Usuario = ? AND Contrasena = ?", (usuario, contrasena,))
+        
+        # Cambia la consulta para seleccionar el ID_Profesor y el Nombre
+        cur.execute("SELECT ID_Profesor, Nombre FROM Profesor WHERE Usuario = ? AND Contrasena = ?", (usuario, contrasena,))
         teacher = cur.fetchone()
+        
         
         cur.execute("SELECT Nombre FROM Administrador WHERE Usuario = ? AND Contrasena = ?", (usuario, contrasena,))
         administrator = cur.fetchone()
 
         if teacher:
-            return jsonify({"message": "Login successful", "role": "Teacher", "name": teacher[0]}), 200
+            profesor_id, teacher_name = teacher  # Desempaqueta correctamente el resultado de la consulta
+            return jsonify({
+                "message": "Login successful",
+                "role": "Teacher",
+                "name": teacher_name,
+                "profesor_id": profesor_id
+            }), 200
         elif administrator:
             # Obtener el nombre del administrador desde la consulta SQL
             admin_name = administrator[0]
@@ -118,31 +126,68 @@ def get_aulas():
 @app.route('/api/disponibilidad', methods=['POST'])
 def update_availability():
     data = request.json
+    print("Received data:", data)  # Log the data to the console
+    
+    # Extracting 'profesor_id' from the received data
     profesor_id = data.get('profesor_id')
+    if profesor_id is None:
+        print("Error: 'profesor_id' is required.")
+        return jsonify({"message": "'profesor_id' is required"}), 400
+    
+    # Attempt to convert 'profesor_id' to an integer
+    try:
+        profesor_id = int(profesor_id)
+    except ValueError as e:
+        print(f"Error converting 'profesor_id' to int: {e}")
+        return jsonify({"message": "'profesor_id' must be an integer"}), 400
+    
+    # Extracting 'disponibilidad' and 'nombramiento' from the received data
     disponibilidad = data.get('disponibilidad')
     nombramiento = data.get('nombramiento')
 
+    # Checking if 'disponibilidad' is a dictionary
+    if not isinstance(disponibilidad, dict):
+        print("Error: 'disponibilidad' must be a dictionary.")
+        return jsonify({"message": "'disponibilidad' must be a dictionary"}), 400
+
+    # Checking if 'nombramiento' is provided
+    if nombramiento is None:
+        print("Error: 'nombramiento' is None.")
+        return jsonify({"message": "'nombramiento' is required"}), 400
+
+    # Connecting to the database and updating availability
     try:
         conn = mariadb.connect(**config)
         cur = conn.cursor()
 
-        # Primero, borra las entradas existentes para este profesor
-        cur.execute("DELETE FROM Disponibilidad WHERE profesor_id = ?", (profesor_id,))
+        # Deleting existing entries for the professor in the 'Disponibilidad' table
+        delete_query = "DELETE FROM Disponibilidad WHERE profesor_id = ?"
+        cur.execute(delete_query, (profesor_id,))
 
-        # Luego, inserta las nuevas disponibilidades
+        # Inserting new availability data into the 'Disponibilidad' table
         for day, hours in disponibilidad.items():
             for hour_range in hours:
                 start_time, end_time = hour_range.split(" - ")
-                cur.execute(
-                    "INSERT INTO Disponibilidad (profesor_id, dia, hora_inicio, hora_fin) VALUES (?, ?, ?, ?)",
-                    (profesor_id, day, start_time, end_time)
-                )
+                insert_query = """
+                INSERT INTO Disponibilidad (profesor_id, dia, hora_inicio, hora_fin) 
+                VALUES (?, ?, ?, ?)
+                """
+                cur.execute(insert_query, (profesor_id, day, start_time, end_time))
+        
+        # Updating 'nombramiento' if necessary (you need to update this with the correct table and column names)
+        # Assuming that the 'nombramiento' column exists in a table that is related to 'profesor_id'
+        update_nombramiento_query = """
+        UPDATE Profesor 
+        SET Horas_Nombramiento = ? 
+        WHERE ID_Profesor = ?
+        """
+        cur.execute(update_nombramiento_query, (nombramiento, profesor_id))
 
         conn.commit()
-        return jsonify({"message": "Disponibilidad actualizada correctamente"}), 200
+        return jsonify({"message": "Disponibilidad y nombramiento actualizados correctamente"}), 200
     except mariadb.Error as e:
-        print(f"Error conectando a MariaDB: {e}")
-        return jsonify({"message": "Error de conexión a la base de datos"}), 500
+        print(f"Error connecting to MariaDB: {e}")
+        return jsonify({"message": "Database connection error"}), 500
     finally:
         cur.close()
         conn.close()

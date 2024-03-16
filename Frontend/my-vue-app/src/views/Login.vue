@@ -47,9 +47,10 @@ export default {
     console.log("Mensaje recibido:", response.data.message);
 
     if (response.data.message.includes('Login successful')) {
-  console.log('Nombre de usuario recibido:', response.data.name);
-  localStorage.setItem('userRole', response.data.role);
-  localStorage.setItem('userName', response.data.name); // Guarda el nombre del usuario
+      localStorage.setItem('profesor_id', response.data.profesor_id);
+    console.log('Nombre de usuario recibido:', response.data.name);
+    localStorage.setItem('userRole', response.data.role);
+    localStorage.setItem('userName', response.data.name); // Guarda el nombre del usuario
 
   if (response.data.role === 'Teacher') {
     this.$router.push('/teacher-dashboard');
@@ -106,7 +107,7 @@ export default {
   padding: 2em;
   background: #FFFFFF;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 0px;
+  border-radius: 30px;
   text-align: center;
   width: 300px; /* Ancho fijo del formulario */
 }
