@@ -1,4 +1,8 @@
 <template>
+    <div class="admin-dashboard">
+    <!-- Contenido omitido para simplificar -->
+    <button @click="downloadCSV">Descargar Horario (Excel)</button>
+  </div>
   <div class="admin-dashboard">
     <h1 class="animated-element">Hola {{ userName }}</h1>
     <div class="header animated-element">
@@ -55,6 +59,7 @@
   
   <script>
   import axios from 'axios';
+  
   export default {
     name: 'AdminDashboard',
     data() {
@@ -83,6 +88,26 @@
   }
 },
     methods: {
+        downloadCSV() {
+    const csvContent = "data:text/csv;charset=utf-8," + [
+      ["Día", "Hora", "Materia", "Id_Profesor", "Aula"],
+      ...this.horario.map(asignacion => [
+        asignacion.dia,
+        asignacion.horario,
+        asignacion.materia,
+        asignacion.profesor,
+        asignacion.aula
+      ])
+    ].map(row => row.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "horario.csv");
+    document.body.appendChild(link);
+    link.click();
+  
+},
       toggleScheduleChange() {
         this.showModal = !this.showModal;
         this.showCurrentSchedule = !this.showCurrentSchedule;
