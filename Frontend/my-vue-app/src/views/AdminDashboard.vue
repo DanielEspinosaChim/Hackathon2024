@@ -1,4 +1,3 @@
-
 <template>
   <div class="admin-dashboard">
     <h1 class="animated-element">Hola {{ userName }}</h1>
@@ -43,7 +42,10 @@
                 <li v-for="(classroom, index) in addedClassrooms" :key="index">{{ classroom }}</li>
               </ul>
             </div>
-            <button @click="generateSchedule">GENERAR</button>
+            <button>
+                <a href="http://localhost:8080/admin-dashboard" style="text-decoration: none; color: inherit;">GENERAR</a>
+            </button>
+
           </div>
         </div>
       </transition>

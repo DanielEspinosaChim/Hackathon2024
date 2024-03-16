@@ -193,6 +193,62 @@ def update_availability():
         cur.close()
         conn.close()
 
+@app.route('/actualizar_materias_aulas', methods=['POST'])
+def actualizar_materias_aulas():
+    data = request.json
+    subjects = set(data.get('subjects', []))  # Usar un conjunto para eliminar duplicados
+    classrooms = set(data.get('classrooms', []))
+
+    try:
+        conn = mariadb.connect(**config)
+        cur = conn.cursor()
+
+        # Actualizar materias
+        # Seleccionar todas las materias existentes
+        cur.execute("SELECT Nombre FROM Asignatura")
+        existing_subjects = set(nombre for (nombre,) in cur.fetchall())
+        
+        # Calcular diferencias para saber qué añadir y qué eliminar
+        subjects_to_add = subjects - existing_subjects
+        subjects_to_remove = existing_subjects - subjects
+
+        # Eliminar materias que ya no estén presentes
+        for subject in subjects_to_remove:
+            cur.execute("DELETE FROM Asignatura WHERE Nombre = ?", (subject,))
+        
+        # Añadir nuevas materias
+        for subject in subjects_to_add:
+            cur.execute("INSERT INTO Asignatura (Nombre) VALUES (?)", (subject,))
+
+        # Actualizar aulas
+        # Seleccionar todas las aulas existentes
+        cur.execute("SELECT Nombre FROM Aula")
+        existing_classrooms = set(nombre for (nombre,) in cur.fetchall())
+        
+        # Calcular diferencias para saber qué añadir y qué eliminar
+        classrooms_to_add = classrooms - existing_classrooms
+        classrooms_to_remove = existing_classrooms - classrooms
+
+        # Eliminar aulas que ya no estén presentes
+        for classroom in classrooms_to_remove:
+            cur.execute("DELETE FROM Aula WHERE Nombre = ?", (classroom,))
+        
+        # Añadir nuevas aulas
+        for classroom in classrooms_to_add:
+            cur.execute("INSERT INTO Aula (Nombre) VALUES (?)", (classroom,))
+
+        conn.commit()
+        return jsonify({"message": "Materias y aulas actualizadas con éxito"}), 200
+    except mariadb.Error as e:
+        print(f"Error conectando a MariaDB: {e}")
+        conn.rollback()
+        return jsonify({"message": "Error de conexión a la base de datos"}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+
+
 def obtener_profesores():
     conn = mariadb.connect(**config)
     cursor = conn.cursor(dictionary=True)
