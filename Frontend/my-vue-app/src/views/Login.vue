@@ -39,11 +39,10 @@ export default {
   methods: {
     async login() {
   try {
-    const response = await axios.post('http://127.0.0.1:5000/login', {
+    const response = await axios.post('http://localhost:5000/login', {
       usuario: this.username,
       contrasena: this.password
     });
-    console.log(response);
     console.log("Respuesta completa:", response);
     console.log("Mensaje recibido:", response.data.message);
 
